@@ -38,6 +38,7 @@ var (
 	packageName = flag.String("package", "main", "package name")
 	compress    = flag.Bool("compress", false, "use gzip compression")
 	buildtags   = flag.String("buildtags", "", "build tags")
+	noArgsErr   = errors.New("No args has been provided")
 )
 
 func write(w io.Writer, r io.Reader, varName string) error {
@@ -86,6 +87,10 @@ func write(w io.Writer, r io.Reader, varName string) error {
 }
 
 func run() error {
+	if *inputDir == "" || *outputDir == "" {
+		return noArgsErr
+	}
+
 	inputfi, err := os.Lstat(*inputDir)
 	if err != nil {
 		return err
@@ -152,7 +157,12 @@ func in(inputFilename string) (io.Reader, error) {
 
 func main() {
 	flag.Parse()
-	if err := run(); err != nil {
+	err := run()
+	if errors.Is(err, noArgsErr) {
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
+	if err != nil {
 		panic(err)
 	}
 }
